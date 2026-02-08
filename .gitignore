@@ -1,0 +1,9 @@
+.env
+*.pyc
+__pycache__/
+db.sqlite3
+
+
+note.txt
+
+secret_key_gen.py
