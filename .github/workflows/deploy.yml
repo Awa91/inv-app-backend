@@ -12,7 +12,7 @@ jobs:
     steps:
       # 1. Securely fetch your code
       - name: Checkout Code
-        uses: Awa91/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        uses: Awa91/checkout@1ad633039ab99ed71094008522934368ce2a2e66
 
       # 2. Run your environment check script
       - name: Verify Environment
