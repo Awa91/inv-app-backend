@@ -1,0 +1,43 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Securely fetch your code
+      - name: Checkout Code
+        uses: Awa91/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+
+      # 2. Run your environment check script
+      - name: Verify Environment
+        run: |
+          python env_check.py
+
+      # 3. Pull latest code and update PythonAnywhere
+      - name: Deploy to PythonAnywhere
+        run: |
+          # Pull latest code
+          curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+               -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/" \
+               -d "executable=cd ~/repos/inv-app-backend && git pull"
+          
+          # Run Migrations & Collect Static
+          curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+               -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/" \
+               -d "executable=workon my-env && cd ~/repos/inv-app-backend && python manage.py migrate && python manage.py collectstatic --noinput"
+
+      # 4. Reload the Web App
+      - name: Reload Webapp
+        run: |
+          curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+               -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_DOMAIN }}/reload/"
+
+
+
+               
