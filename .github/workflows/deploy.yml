@@ -14,6 +14,9 @@ jobs:
       - name: Checkout Code
         uses: Awa91/checkout@1ad633039ab99ed71094008522934368ce2a2e66
 
+        with:
+          python-version: '3.12'
+
       # 2. Run your environment check script
       - name: Verify Environment
         run: |
