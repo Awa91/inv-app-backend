@@ -1,0 +1,44 @@
+name: Django CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Fetch code using your fork and a specific commit SHA
+      - name: Checkout Code
+        uses: Awa91/checkout@1ad633039ab99ed71094008522934368ce2a2e66
+
+      # 2. Initialize Python using your fork and a specific commit SHA
+      - name: Set up Python
+        uses: Awa91/setup-python@3e8918d60aa430a09b337139783a216027ad6703
+        with:
+          python-version: '3.12'
+
+      # 3. Run the dependency-free environment check
+      - name: Verify Environment
+        run: python env_check.py
+
+      # 4. Deploy to PythonAnywhere via API
+      - name: Deploy to PythonAnywhere
+        run: |
+          # Update the source code on the server
+          curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+               -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/" \
+               -d "executable=cd ~/repos/inv-app-backend && git pull"
+          
+          # Run database migrations and collect static files
+          curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+               -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/" \
+               -d "executable=workon my-env && cd ~/repos/inv-app-backend && python manage.py migrate && python manage.py collectstatic --noinput"
+
+      # 5. Reload the Web App to apply changes
+      - name: Reload Webapp
+        run: |
+          curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
+               -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_DOMAIN }}/reload/"
