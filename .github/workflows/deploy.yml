@@ -10,40 +10,32 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. Securely fetch your code
+      # 1. MUST use the SHA, not @v4
       - name: Checkout Code
         uses: Awa91/checkout@1ad633039ab99ed71094008522934368ce2a2e66
 
+      # 2. You need to fork actions/setup-python to Awa91/setup-python first!
       - name: Set up Python
-        uses: Awa91/setup-python@3e8918d60aa430a09b337139783a216027ad6703 # SHA for v5.3.0
-
+        uses: Awa91/setup-python@3e8918d60aa430a09b337139783a216027ad6703
         with:
           python-version: '3.12'
 
-      # 2. Run your environment check script
+      # 3. Running the check script we optimized earlier
       - name: Verify Environment
-        run: |
-          python env_check.py
+        run: python env_check.py
 
-      # 3. Pull latest code and update PythonAnywhere
+      # 4. Deployment via Curl
       - name: Deploy to PythonAnywhere
         run: |
-          # Pull latest code
           curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
                -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/" \
                -d "executable=cd ~/repos/inv-app-backend && git pull"
           
-          # Run Migrations & Collect Static
           curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
                -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/consoles/" \
                -d "executable=workon my-env && cd ~/repos/inv-app-backend && python manage.py migrate && python manage.py collectstatic --noinput"
 
-      # 4. Reload the Web App
       - name: Reload Webapp
         run: |
           curl -H "Authorization: Token ${{ secrets.PA_API_TOKEN }}" \
                -X POST "https://www.pythonanywhere.com/api/v0/user/${{ secrets.PA_USERNAME }}/webapps/${{ secrets.PA_DOMAIN }}/reload/"
-
-
-
-               
